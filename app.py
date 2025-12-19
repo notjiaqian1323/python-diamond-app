@@ -282,6 +282,7 @@ with col_stats:
             except Exception as e:
                 st.error(f"Prediction Error: {str(e)}")
         
+        
 
 # Footer
 st.divider()
