@@ -14,18 +14,27 @@ st.set_page_config(page_title="Diamond AI Predictor", layout="wide", page_icon="
 # Custom CSS for the "Luxury" look
 st.markdown("""
     <style>
-    .main { background-color: #0e1117; color: white; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #2e7bcf; color: white; border: none; }
-    .price-box {
-        background-color: #1a1c24;
-        padding: 2rem;
-        border-radius: 10px;
-        border: 1px solid #2e7bcf;
+    .main { background-color: #0e1117; }
+    .stButton>button { background-color: #00B4D8; color: white; border-radius: 8px; height: 3em; font-weight: bold;}
+    .price-card {
+        background: linear-gradient(145deg, #1e2130, #13151c);
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid #333;
         text-align: center;
-        margin-top: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
-    .price-text { font-size: 2.5rem; color: #00d4ff; font-weight: bold; }
-    .confidence-text { font-size: 1rem; color: #888; }
+    .metric-label { color: #888; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+    .metric-value { color: #00B4D8; font-size: 2.5em; font-weight: 700; text-shadow: 0 0 10px rgba(0, 180, 216, 0.3); }
+    .warning-box {
+        background-color: #332b00;
+        color: #ffcc00;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #ffcc00;
+        margin-top: 15px;
+        font-size: 0.9em;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -271,6 +280,19 @@ with col_stats:
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+                # --- OPTION A: HONEST WARNING SYSTEM ---
+                # Check if the input exceeds the reliable training distribution
+                # Thresholds: Price > $18,000 OR Carat > 2.5
+                if price > 18500 or u_carat > 2.5:
+                        st.markdown(f"""
+                        <div class="warning-box">
+                            <strong>⚠️ High-End Extrapolation Warning</strong><br>
+                            This diamond exceeds the standard market data used to train this model (typically < $18,500).<br>
+                            The predicted price of <strong>${price:,.2f}</strong> is a conservative estimate based on available data curves. 
+                            True market value for ultra-luxury stones often scales higher due to rarity premiums not captured here.
+                        </div>
+                        """, unsafe_allow_html=True)
                 
                 st.write("") # Spacer
                 st.info(f"""
