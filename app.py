@@ -19,21 +19,59 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# 2. MODEL CONFIGURATION & LOADING
+# ---------------------------------------------------------
+MODEL_REGISTRY = {
+    "LightGBM (Recommended)": {"file": "lgbm_diamond_model_new.txt", "type": "lgbm"},
+    "XGBoost (High Accuracy)": {"file": "xgboost_diamond_model.json", "type": "xgb"},
+    "Random Forest": {"file": "rf_diamond_model.pkl", "type": "sklearn"},
+    "Decision Tree": {"file": "dt_diamond_model.pkl", "type": "sklearn"}
+}
+
 # 2. LOAD MODEL
 @st.cache_resource
-def load_diamond_model():
-    model_path = 'models/lgbm_diamond_model_new.txt'
-    if os.path.exists(model_path):
-        # We load it using the Booster class
-        return lgb.Booster(model_file=model_path)
-    elif os.path.exists('models/lgbm_diamond_model_new.pkl'):
-        return joblib.load('models/lgbm_diamond_model_new.pkl')
-    return None
+def load_selected_model(model_key):
+    """Loads the model based on the dropdown selection."""
+    config = MODEL_REGISTRY[model_key]
+    path = os.path.join('models', config["file"])
+    model_type = config["type"]
+    
+    if not os.path.exists(path):
+        return None, model_type, False # File missing
 
-model = load_diamond_model()
+    try:
+        if model_type == "lgbm":
+            # Native LightGBM
+            return lgb.Booster(model_file=path), model_type, True
+        
+        elif model_type == "xgb":
+            # Native XGBoost
+            model = xgb.Booster()
+            model.load_model(path)
+            return model, model_type, True
+            
+        elif model_type == "sklearn":
+            # Random Forest / Decision Tree (Pickle)
+            return joblib.load(path), model_type, True
+            
+    except Exception as e:
+        st.error(f"Error loading {model_key}: {e}")
+        return None, model_type, False
+    
+    return None, model_type, False
 
 # 3. SIDEBAR (Inputs)
 st.sidebar.header("💎 Design Your Diamond")
+
+# --- MODEL SELECTOR ---
+st.sidebar.subheader("⚙️ Prediction Engine")
+selected_model_name = st.sidebar.selectbox("Choose Model", list(MODEL_REGISTRY.keys()), index=0)
+
+# Load the model dynamically
+model, model_type, is_loaded = load_selected_model(selected_model_name)
+
+st.sidebar.divider()
+
 u_cut = st.sidebar.selectbox("Cut", ['Ideal', 'Premium', 'Very Good', 'Good', 'Fair'])
 u_color = st.sidebar.selectbox("Color", ['D', 'E', 'F', 'G', 'H', 'I', 'J'], index=3)
 u_clarity = st.sidebar.selectbox("Clarity", ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1'], index=4)
@@ -56,18 +94,40 @@ with col_visual:
 with col_stats:
     # Calculate physics
     phys_stats = calculate_physics(u_carat, u_depth)
+
+    # Model Status Badge
+    if is_loaded:
+        st.success(f"🟢 Model Loaded: {selected_model_name}")
+    else:
+        st.error(f"🔴 File Not Found: {MODEL_REGISTRY[selected_model_name]['file']}")
+        st.info("Please place the model file in the 'models/' folder.")
     
     if predict_btn and model:
         try:
             # Prepare Data using helper function
             input_df = prepare_input_df(u_carat, u_cut, u_color, u_clarity, u_depth, u_table, phys_stats['vol'])
             
-            # Align Columns (Safety Check)
-            expected_cols = model.feature_name()
-            input_df = input_df[expected_cols]
+            # --- PREDICTION LOGIC SWITCHER ---
+            pred_log = 0.0
             
-            # Predict
-            pred_log = model.predict(input_df)[0]
+            if model_type == "lgbm":
+                # LightGBM Native: Strict column alignment
+                if hasattr(model, 'feature_name'):
+                    input_df = input_df[model.feature_name()]
+                pred_log = model.predict(input_df)[0]
+                
+            elif model_type == "xgb":
+                # XGBoost Native: Needs DMatrix
+                # Note: Columns must match training order exactly!
+                dtrain = xgb.DMatrix(input_df)
+                pred_log = model.predict(dtrain)[0]
+                
+            elif model_type == "sklearn":
+                # Random Forest / DT: Input array or DF
+                # Sklearn is lenient with names but strict with order
+                pred_log = model.predict(input_df)[0]
+
+            # Back-Transform
             price = np.expm1(pred_log)
             
             # Display
@@ -75,7 +135,7 @@ with col_stats:
             <div class="price-card">
                 <div style="color:#888; font-size:0.9em;">ESTIMATED VALUE</div>
                 <div class="metric-value">${price:,.2f}</div>
-                <div style="color:#666; margin-top:10px;">Confidence: ±1.0%</div>
+                <div style="color:#666; margin-top:10px;">Model: {selected_model_name}</div>
             </div>
             """, unsafe_allow_html=True)
             
