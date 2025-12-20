@@ -38,9 +38,9 @@ def _generate_inclusions(clarity_grade, radius_limit):
 def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
     """
     Generates a realistic 3D diamond visualization using nested kernels.
+    Fixed specular values to remain within Plotly's valid range [0, 2].
     """
     # 1. Base Geometry Calculations
-    # Physics: Diameter roughly scales with cube root of carat
     diameter = 6.5 * (carat ** (1/3)) 
     radius = diameter / 2
     total_depth = diameter * (depth_pct / 100)
@@ -51,7 +51,6 @@ def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
     z_culet = -total_depth * 0.65
 
     # Points Generation (Standard Round Brilliant Facets)
-    # We use 8 segments to define the main facet structure
     angles = np.linspace(0, 2*np.pi, 9)[:-1]
     tx = table_radius * np.cos(angles); ty = table_radius * np.sin(angles); tz = np.full_like(tx, z_table)
     gx = radius * np.cos(angles); gy = radius * np.sin(angles); gz = np.full_like(gx, z_girdle)
@@ -68,7 +67,7 @@ def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
     surf_color, core_color, heart_color = _get_diamond_palette(color_grade)
 
     # --- LAYER 1: THE HEART (Deep Interior, 60% Size) ---
-    # Most opaque and saturated layer to simulate light trapped in the center.
+    # High ambient and diffuse to make the internal color glow.
     fig.add_trace(go.Mesh3d(
         x=x_base * 0.6, y=y_base * 0.6, z=z_base * 0.6,
         alphahull=0, opacity=0.8, color=heart_color,
@@ -77,34 +76,38 @@ def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
     ))
 
     # --- LAYER 2: THE CORE (Body Substance, 88% Size) ---
-    # Provides the volumetric depth and semi-transparency.
     fig.add_trace(go.Mesh3d(
         x=x_base * 0.88, y=y_base * 0.88, z=z_base * 0.88,
         alphahull=0, opacity=0.4, color=core_color,
-        lighting=dict(ambient=0.5, diffuse=0.8, roughness=0.2, specular=0.2),
+        lighting=dict(ambient=0.5, diffuse=0.8, roughness=0.2, specular=0.5),
         flatshading=True, hoverinfo='skip'
     ))
 
     # --- LAYER 3: THE SURFACE (Outer Glass, 100% Size) ---
-    # Very transparent but highly reflective (high specular and fresnel).
+    # specular set to 2.0 (MAX allowed by Plotly) for the shine effect.
     fig.add_trace(go.Mesh3d(
         x=x_base, y=y_base, z=z_base,
         alphahull=0, opacity=0.15, color=surf_color,
-        lighting=dict(ambient=0.1, diffuse=0.1, roughness=0.01, specular=3.5, fresnel=5.0),
+        lighting=dict(
+            ambient=0.2, 
+            diffuse=0.2, 
+            roughness=0.01, 
+            specular=2.0,   # Fix: Plotly allows [0, 2]
+            fresnel=5.0     # Fresnel allows up to 5.0
+        ),
         flatshading=True, name='Diamond Surface'
     ))
 
-    # --- LAYER 4: SELECTIVE WIREFRAME (Glinting Edges) ---
-    # We draw fewer lines to maintain a "solid" feel rather than a grid.
+    # --- LAYER 4: SELECTIVE WIREFRAME ---
     xl, yl, zl = [], [], []
     def add_l(x1, y1, z1, x2, y2, z2):
         xl.extend([x1, x2, None]); yl.extend([y1, y2, None]); zl.extend([z1, z2, None])
     
     for i in range(8):
         nxt = (i+1)%8
-        add_l(tx[i], ty[i], tz[i], tx[nxt], ty[nxt], tz[nxt]) # Table Ring
-        add_l(gx[i], gy[i], gz[i], gx[nxt], gy[nxt], gz[nxt]) # Girdle Ring
-        if i % 2 == 0: # Only draw 4 vertical ribs for a cleaner look
+        add_l(tx[i], ty[i], tz[i], tx[nxt], ty[nxt], tz[nxt])
+        add_l(gx[i], gy[i], gz[i], gx[nxt], gy[nxt], gz[nxt])
+        if i % 2 == 0:
             add_l(tx[i], ty[i], tz[i], gx[i], gy[i], gz[i])
             add_l(gx[i], gy[i], gz[i], cx[0], cy[0], cz[0])
 
@@ -114,7 +117,7 @@ def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
         hoverinfo='skip'
     ))
 
-    # --- LAYER 5: INCLUSIONS (Clarity Flaws) ---
+    # --- LAYER 5: INCLUSIONS ---
     ix, iy, iz = _generate_inclusions(clarity_grade, radius)
     if ix is not None:
         fig.add_trace(go.Scatter3d(
@@ -138,7 +141,8 @@ def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
         showlegend=False
     )
     
-    return fig
+    return fig fig
+
 
 
 
