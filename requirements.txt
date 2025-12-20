@@ -4,3 +4,4 @@ numpy
 lightgbm
 plotly
 joblib
+xgboost
