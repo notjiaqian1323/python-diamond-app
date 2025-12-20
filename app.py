@@ -24,7 +24,7 @@ st.markdown("""
 MODEL_REGISTRY = {
     "LightGBM (Recommended)": {"file": "lgbm_diamond_model_new.txt", "type": "lgbm"},
     "XGBoost (High Accuracy)": {"file": "xgboost_diamond_model.json", "type": "xgb"},
-    "Decision Tree": {"file": "dt_diamond_model.pkl", "type": "sklearn"}
+    "Decision Tree": {"file": "decision_tree_diamond_model.pkl", "type": "sklearn"}
 }
 
 # 2. LOAD MODEL
