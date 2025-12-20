@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import lightgbm as lgb
+import xgboost as xgb # Ensure xgboost is installed: pip install xgboost
 import os
 
 # Import our custom modules
