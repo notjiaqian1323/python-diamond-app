@@ -141,7 +141,8 @@ def create_diamond_fig(carat, table_pct, depth_pct, color_grade, clarity_grade):
         showlegend=False
     )
     
-    return fig fig
+    return fig
+
 
 
 
