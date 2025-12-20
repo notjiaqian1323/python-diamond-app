@@ -49,14 +49,15 @@ def prepare_input_df(u_carat, u_cut, u_color, u_clarity, u_depth, u_table, u_vol
     # 3. Build Dictionary
     # Keys MUST match model feature names
     data_dict = {
+        'depth': [u_depth],
+        'table': [u_table],
         'log_carat': [log_carat],
         'log_volume': [log_volume],
-        'table': [u_table],
-        'depth': [u_depth],
         'int_carat_color': [int_col],
         'int_carat_clarity': [int_cla],
         'int_carat_cut': [int_cut],
     }
     
     return pd.DataFrame(data_dict)
+
 
