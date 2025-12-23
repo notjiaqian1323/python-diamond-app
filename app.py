@@ -87,7 +87,7 @@ predict_btn = st.sidebar.button("RUN PREDICTION")
 col_visual, col_stats = st.columns([2, 1])
 
 # --- Generate Visuals (using visualizer.py) ---
-fig = create_diamond_fig(u_carat, u_table, u_depth, u_color, u_clarity)
+fig = create_diamond_fig(u_carat, u_table, u_depth, u_color, u_clarity, u_cut)
 with col_visual:
     st.plotly_chart(fig, use_container_width=True)
 
