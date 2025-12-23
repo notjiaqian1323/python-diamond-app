@@ -147,17 +147,6 @@ with col_stats:
                 <div style="color:#888; font-size:0.8em; text-transform:uppercase;">Estimated Market Value</div>
                 <div class="metric-value">${price:,.2f}</div>
                 <div class="range-text">Expected range: ${lower_bound:,.0f} — ${upper_bound:,.0f}</div>
-                
-                <div class="stat-box">
-                    <div class="stat-item">
-                        <div class="stat-label">MAE</div>
-                        <div class="stat-val">±${model_meta['mae']:.0f}</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">MAPE</div>
-                        <div class="stat-val">{model_meta['mape']:.1f}%</div>
-                    </div>
-                </div>
             </div>
             """, unsafe_allow_html=True)
             
