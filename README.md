@@ -114,5 +114,39 @@ To achieve production-grade accuracy, several advanced data engineering techniqu
 2. **Handling The Size Bias (Simpson's Paradox):** — Exploratory Data Analysis revealed that lower clarity/color grades had higher average prices. We identified this as a size bias—nature rarely produces large, flawless diamonds, meaning lower grades are dominated by massive stones. We utilized interaction features to disentangle the premium for quality from the premium for size.
 3. **Logarithmic Scaling:** — The raw price distribution was heavily right-skewed (a classic Pareto distribution). We applied $Log(Price)$ and $Log(Carat)$ transformations to resolve heteroscedasticity, ensuring our models minimized percentage errors (MAPE) rather than chasing absolute dollar errors on extreme luxury outliers.
 
+---
 
-Three model provided, which are LightGBM, XGBoost and Decision Tree in the application
+## Model Performance
+
+Four models were rigorously evaluated based on Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), Mean Absolute Percentage Error (MAPE), and R-Squared.
+
+**XGBoost Regressor** emerged as the superior model, demonstrating the greatest resilience against extreme mispredictions.
+
+| Metric | Decision Tree | Random Forest | XGBoost (Best) | LightGBM | 
+|---|---|---|---|---|
+| R-Squared | 0.9784 | 0.9804 | **0.9824** | 0.9802 |
+| MAPE (%) | 8.39% | 7.87% | **7.35%** | 7.87% |
+| MAE (USD) | $306.45 | $285.89 | **$272.44** | $282.31 |
+| RMSE (USD) | $587.09 | $559.59 | **$529.01** | $562.21 |
+
+
+---
+
+## Repo Structure
+
+```
+diaqueen/
+├── app.py                                      # Main Streamlit application script
+├── requirements.txt                            # Python dependencies
+├── models/
+│   ├── xgboost_diamond_model.json              # Saved XGBoost weights
+│   └── lightgbm_diamond_model.pkl              # Saved LightGBM weights
+│   └── decision_tree_diamond_model.pkl         # Saved Decision Tree weights
+├── utils/
+│   └── Diamonds_Prices2022.csv # Original dataset
+└── README.md                   # Project documentation
+
+```
+
+
+> Three model provided, which are LightGBM, XGBoost and Decision Tree in the application
